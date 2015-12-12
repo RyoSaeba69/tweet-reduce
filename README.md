@@ -1,12 +1,15 @@
 # tweet-reduce
 Tendance on Tweeter.
 
-Pour compiler : javac -cp scribe-1.3.7.jar \*.java
-Pour Lancer : java -cp .:scribe-1.3.7.jar Main
+Pour installer gradle : `brew install gradle`
 
+Pour compiler et créer un jar : `gradle jar`
+
+Le jar est généré dans build/libs
+
+Pour lancer le jar : `hadoop tweet-reduce-x.x.jar`
 
 Ajouter : la classe OurCredentials.java
-
 
 import java.lang.String;
 

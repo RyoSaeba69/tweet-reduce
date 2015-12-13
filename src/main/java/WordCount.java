@@ -26,11 +26,12 @@ public class WordCount {
 
     public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
       StringTokenizer itr = new StringTokenizer(value.toString());
+
+      Text happy = new Text("happy");
       while (itr.hasMoreTokens()) {
         word.set(itr.nextToken());
-        context.write(word, one);
 
-        if(word == new Text("happy"))// || word == "satisfied" || word == "joyful" || word == "joyous" || word == "chherful" || word == "contented" || word == "delighted" || word == "ecstatic" || word == "depressed" || word == "disturbed" || word == "sad" || word == "sadness" || word == "upset" || word == "unhappy" || word == "troubled" || word == "disappointed")
+        if(word.equals(happy))// || word == "satisfied" || word == "joyful" || word == "joyous" || word == "chherful" || word == "contented" || word == "delighted" || word == "ecstatic" || word == "depressed" || word == "disturbed" || word == "sad" || word == "sadness" || word == "upset" || word == "unhappy" || word == "troubled" || word == "disappointed")
         {
           context.write(word, one);
         }
@@ -64,7 +65,7 @@ public class WordCount {
       System.err.println("Usage: wordcount <in> <out>");
       System.exit(2);
     }
-    Job job = new Job(conf, "word count");
+    Job job = Job.getInstance(conf, "word count");
     job.setJarByClass(WordCount.class);
     job.setMapperClass(TokenizerMapper.class);
     job.setCombinerClass(IntSumReducer.class);

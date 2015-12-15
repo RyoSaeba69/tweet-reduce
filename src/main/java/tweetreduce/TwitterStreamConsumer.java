@@ -29,8 +29,16 @@ public class TwitterStreamConsumer extends Thread {
 
 	private static final String STREAM_URI = "https://stream.twitter.com/1.1/statuses/filter.json";
 
+    private String searchTerms;
 
-	public void run(){
+    private long maxtime;
+
+    public TwitterStreamConsumer(String searchTerms, long maxtime) {
+        this.searchTerms = searchTerms;
+        this.maxtime = maxtime;
+    }
+
+    public void run(){
 		try{
 			System.out.println("Starting Twitter public stream consumer thread.");
 
@@ -52,7 +60,8 @@ public class TwitterStreamConsumer extends Thread {
 			request.setConnectionKeepAlive(true);
 			request.addHeader("user-agent", "Twitter Stream Reader");
             // request.addBodyParameter("track", "happy,satisfied,joyful,joyous,chherful,contented,delighted,ecstatic,depressed,disturbed,sad,sadness,upset,unhappy,troubled,disappointed"); // Set keywords you'd like to track here
-			request.addBodyParameter("track", "chocolate,cat,girl"); // Set keywords you'd like to track here
+//            request.addBodyParameter("track", "chocolate,cat,girl"); // Set keywords you'd like to track here
+            request.addBodyParameter("track", this.searchTerms); // Set keywords you'd like to track here
 			service.signRequest(accessToken, request);
 			Response response = request.send();
 
@@ -67,15 +76,21 @@ public class TwitterStreamConsumer extends Thread {
 			FileWriter ecrireFichier;
 			// Instanciation de l'objet ecrireFichier qui va écrire dans fichierTexte.txt
 			ecrireFichier = new FileWriter(fichierTexte);
-			int i = 0;
-			while ((line = reader.readLine()) != null) {
+
+            long startTime = System.currentTimeMillis();
+            long elapsedTime = 0;
+
+			while ((line = reader.readLine()) != null && elapsedTime < this.maxtime) {
                 ArrayList<String> information = new ArrayList<String>(Arrays.asList(line.split(",")));
                 if(information != null && information.size() > 3){
                     String textInfo = information.get(3);
                     // System.out.println("Text info " + textInfo);
 
-                    String tweetText = textInfo.substring(7, textInfo.length());
+                    String tweetText = textInfo.substring(8, textInfo.length());
     				ecrireFichier.write(tweetText+ "\n");
+
+                    elapsedTime = System.currentTimeMillis() - startTime;
+
                 }
 
 			}

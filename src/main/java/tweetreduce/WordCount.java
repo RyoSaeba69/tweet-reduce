@@ -18,64 +18,19 @@ import org.apache.hadoop.util.GenericOptionsParser;
 
 public class WordCount {
 
-    public static class TokenizerMapper
-            extends Mapper<Object, Text, Text, IntWritable> {
-
-        private final static IntWritable one = new IntWritable(1);
-        private Text word = new Text();
-        private LexicalWord lw = LexicalWord.getInstance();
-
-        public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
-            StringTokenizer itr = new StringTokenizer(value.toString());
-
-
-            while (itr.hasMoreTokens()) {
-                word.set(itr.nextToken());
-
-                if(lw.getHappyWords().contains(word.toString().toLowerCase())){
-                    context.write(new Text("Happy"), one);
-                } else if(lw.getSadWords().contains(word.toString().toLowerCase())){
-                    context.write(new Text("Sad"), one);
-
-                }
-
-
-//                if (word.equals(happy))// || word == "satisfied" || word == "joyful" || word == "joyous" || word == "chherful" || word == "contented" || word == "delighted" || word == "ecstatic" || word == "depressed" || word == "disturbed" || word == "sad" || word == "sadness" || word == "upset" || word == "unhappy" || word == "troubled" || word == "disappointed")
-//                {
-//                    context.write(new Text(":)"), one);
-//                } else if (word.equals(sad)){
-//                    context.write(new Text(":("), one);
-//                }
-            }
-        }
-    }
-
-
-    public static class IntSumReducer
-            extends Reducer<Text, IntWritable, Text, IntWritable> {
-        private IntWritable result = new IntWritable();
-
-        public void reduce(Text key, Iterable<IntWritable> values,
-                           Context context
-        ) throws IOException, InterruptedException {
-            int sum = 0;
-            for (IntWritable val : values) {
-                sum += val.get();
-            }
-            result.set(sum);
-            context.write(key, result);
-        }
-    }
 
     public static void main(String[] args) throws Exception {
 
-        if(args.length < 2){
-            System.err.println("Usage: wordcount <search> <time> <out>");
+//        Type could be : happy or words
+        if(args.length < 3){
+            System.err.println("Usage: tweet-reduce-1.0 <type> <search> <time> <out>");
             System.exit(2);
         }
 
-        String searchTerms = args[0];
-        long timeToUse = Long.valueOf(args[1]);
+        String type = args[0].toLowerCase();
+        String searchTerms = args[1];
+        long timeToUse = Long.valueOf(args[2]);
+
 
         TwitterStreamConsumer tsc = new TwitterStreamConsumer(searchTerms, timeToUse);
 
@@ -94,17 +49,29 @@ public class WordCount {
         String inputPath = "res.txt";
 
         String outPath = "hadout";
-        if(args.length > 2){
-            outPath = args[2];
+        if(args.length > 3){
+            outPath = args[3];
         }
 
 
 
         Job job = Job.getInstance(conf, "word count");
         job.setJarByClass(WordCount.class);
-        job.setMapperClass(TokenizerMapper.class);
-        job.setCombinerClass(IntSumReducer.class);
-        job.setReducerClass(IntSumReducer.class);
+
+
+        if(type.equals("happy")){
+            job.setMapperClass(HappyCount.TokenizerMapper.class);
+            job.setCombinerClass(HappyCount.IntSumReducer.class);
+            job.setReducerClass(HappyCount.IntSumReducer.class);
+        } else if(type.equals("words")){
+            job.setMapperClass(WordsCount.TokenizerMapper.class);
+            job.setCombinerClass(WordsCount.IntSumReducer.class);
+            job.setReducerClass(WordsCount.IntSumReducer.class);
+        }
+
+
+
+
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
         FileInputFormat.addInputPath(job, new Path(inputPath));
